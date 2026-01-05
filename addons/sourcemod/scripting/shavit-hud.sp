@@ -2426,7 +2426,7 @@ void UpdateKeyHint(int client)
 		return;
 	}
 
-	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
+	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && !(gI_HUDSettings[client] & HUD_LANDFIX) && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
 	{
 		return;
 	}
