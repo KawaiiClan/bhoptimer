@@ -108,6 +108,7 @@ char gS_CustomName[MAXPLAYERS+1][128];
 char gS_CustomMessage[MAXPLAYERS+1][16];
 
 chatstrings_t gS_ChatStrings;
+stylestrings_t gS_StyleStrings[STYLE_LIMIT];
 
 // chat procesor
 bool gB_Protobuf = false;
@@ -116,6 +117,9 @@ StringMap gSM_Messages = null;
 
 //kawaii uwu
 bool g_bUwu[MAXPLAYERS+1] = {false, ...};
+
+//style ranks
+int gI_Styles = 0;
 
 char gS_ControlCharacters[][] = {"\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09",
 	"\x0A", "\x0B", "\x0C", "\x0D", "\x0E", "\x0F", "\x10" };
@@ -254,6 +258,19 @@ public void OnAllPluginsLoaded()
 public void Shavit_OnChatConfigLoaded()
 {
 	Shavit_GetChatStringsStruct(gS_ChatStrings);
+}
+
+public void Shavit_OnStyleConfigLoaded(int styles)
+{
+	gI_Styles = styles;
+
+	for (int i = 0; i < STYLE_LIMIT; i++)
+	{
+		if (i < styles)
+		{
+			Shavit_GetStyleStringsStruct(i, gS_StyleStrings[i]);
+		}
+	}
 }
 
 public void OnMapStart()
@@ -1388,6 +1405,31 @@ void FormatChat(int client, char[] buffer, int size)
 		IntToString(iRank, temp, 32);
 		ReplaceString(buffer, size, "{rank}", temp);
 
+		int iStyleRank;
+		char sStyleRank[16];
+		char sStyleBuf[32];
+		for (int i = 0; i < gI_Styles; i++)
+		{
+			iStyleRank = Shavit_GetStyleRank(client, i);
+			if(iStyleRank == 0)
+			{
+				strcopy(sStyleRank, 16, "Unranked");
+			}
+			else
+			{
+				IntToString(iStyleRank, sStyleRank, 16);
+				Format(sStyleRank, 16, "#%s", sStyleRank);
+			}
+			FormatEx(sStyleBuf, 32, "{style%drank}", i);
+			ReplaceString(buffer, size, sStyleBuf, sStyleRank);
+
+			if(i == Shavit_GetBhopStyle(client))
+			{
+				FormatEx(sStyleBuf, 32, "%s %s", sStyleRank, gS_StyleStrings[i].sStyleName);
+				ReplaceString(buffer, size, "{currentstylerank}", sStyleBuf);
+			}
+		}
+
 		int iRanked = Shavit_GetRankedPlayers();
 
 		if(iRanked == 0)
@@ -1627,6 +1669,31 @@ public int Native_GetPlainChatrank(Handle handler, int numParams)
 		char sRank[16];
 		IntToString(iRank, sRank, 16);
 		ReplaceString(buf, sizeof(buf), "{rank}", sRank);
+
+		int iStyleRank;
+		char sStyleRank[16];
+		char sStyleBuf[32];
+		for (int i = 0; i < gI_Styles; i++)
+		{
+			iStyleRank = Shavit_GetStyleRank(client, i);
+			if(iStyleRank == 0)
+			{
+				strcopy(sStyleRank, 16, "Unranked");
+			}
+			else
+			{
+				IntToString(iStyleRank, sStyleRank, 16);
+				Format(sStyleRank, 16, "#%s", sStyleRank);
+			}
+			FormatEx(sStyleBuf, 32, "{style%drank}", i);
+			ReplaceString(buf, sizeof(buf), sStyleBuf, sStyleRank);
+
+			if(i == Shavit_GetBhopStyle(client))
+			{
+				FormatEx(sStyleBuf, 32, "%s %s", sStyleRank, gS_StyleStrings[i].sStyleName);
+				ReplaceString(buf, sizeof(buf), "{currentstylerank}", sStyleBuf);
+			}
+		}
 
 		int iRanked = Shavit_GetRankedPlayers();
 
