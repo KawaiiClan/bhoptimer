@@ -233,6 +233,7 @@ public void OnPluginStart()
 		..."HUD2_USPSILENCER			16384\n"
 		..."HUD2_GLOCKBURST			32768\n"
 		..."HUD2_CENTERKEYS			65536\n"
+		..."HUD2_LANDFIX			1073741824\n"
 	);
 
 	Convar.AutoExecConfig();
@@ -694,10 +695,6 @@ Action ShowHUDMenu(int client, int item)
 	FormatEx(sHudItem, 64, "%T", "HudSpectatorsDead", client);
 	menu.AddItem(sInfo, sHudItem);
 
-	FormatEx(sInfo, 16, "!%d", HUD_LANDFIX);
-	FormatEx(sHudItem, 64, "%T", "HudLandfix", client);
-	menu.AddItem(sInfo, sHudItem);
-
 	FormatEx(sInfo, 16, "!%d", HUD_KEYOVERLAY);
 	FormatEx(sHudItem, 64, "%T", "HudKeyOverlay", client);
 	menu.AddItem(sInfo, sHudItem);
@@ -814,6 +811,13 @@ Action ShowHUDMenu(int client, int item)
 	{
 		FormatEx(sInfo, 16, "@%d", HUD2_MAPTIER);
 		FormatEx(sHudItem, 64, "%T", "HudMapTierText", client);
+		menu.AddItem(sInfo, sHudItem);
+	}
+
+	if (LibraryExists("modern-landfix"))
+	{
+		FormatEx(sInfo, 16, "@%d", HUD2_LANDFIX);
+		FormatEx(sHudItem, 64, "%T", "HudLandfix", client);
 		menu.AddItem(sInfo, sHudItem);
 	}
 
@@ -2426,14 +2430,14 @@ void UpdateKeyHint(int client)
 		return;
 	}
 
-	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && !(gI_HUDSettings[client] & HUD_LANDFIX) && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
+	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && gI_HUDSettings[client] & HUD2_LANDFIX && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
 	{
 		return;
 	}
 
 	if (LibraryExists("modern-landfix"))
 	{
-		if (((gI_HUDSettings[client] & HUD_LANDFIX) > 0) && (target > 0 && target <= MaxClients))
+		if (((gI_HUD2Settings[client] & HUD2_LANDFIX) == 0) && (target > 0 && target <= MaxClients))
 		{
 			FormatEx(sMessage, 256, "%s", Landfix_GetLandfixEnabled(target)?"Landfix On\n\n":"");
 		}

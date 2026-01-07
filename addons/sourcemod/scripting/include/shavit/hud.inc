@@ -43,7 +43,6 @@
 #define HUD_DEBUGTARGETNAME     (1 << 15) // show current targetname & classname
 #define HUD_SPECTATORSDEAD      (1 << 16) // for only showing spectators list when you're dead/spectating.
 #define HUD_PERFS_CENTER        (1 << 17) // for the perf percentage in the center hud.  e.g. "Jumps: 20 (66.6%)"
-#define HUD_LANDFIX             (1 << 30) // for showing if landfix is enabled
 
 // HUD2 - these settings will *disable* elements for the main hud
 #define HUD2_TIME               (1 << 0)
@@ -63,8 +62,9 @@
 #define HUD2_USPSILENCER        (1 << 14) // spawns usps with a silencer on
 #define HUD2_GLOCKBURST         (1 << 15) // spawns glocks with burst
 #define HUD2_CENTERKEYS         (1 << 16) // CSGO option to toggle whether !keys is shown as center-text or in that panel thing.
+#define HUD2_LANDFIX            (1 << 30) // for showing if landfix is enabled
 
-#define HUD_DEFAULT             (HUD_MASTER|HUD_CENTER|HUD_ZONEHUD|HUD_OBSERVE|HUD_TOPLEFT|HUD_SYNC|HUD_TIMELEFT|HUD_2DVEL|HUD_SPECTATORS|HUD_LANDFIX)
+#define HUD_DEFAULT             (HUD_MASTER|HUD_CENTER|HUD_ZONEHUD|HUD_OBSERVE|HUD_TOPLEFT|HUD_SYNC|HUD_TIMELEFT|HUD_2DVEL|HUD_SPECTATORS)
 #define HUD_DEFAULT2            (HUD2_PERFS)
 
 stock bool HUD1Enabled(int hudbits, int flag)
