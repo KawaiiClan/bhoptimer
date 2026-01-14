@@ -533,6 +533,7 @@ public void OnClientDisconnect(int client)
 	}
 
 	gI_UsingCheckpointsOwner[client] = 0;
+	gB_InCheckpointMenu[client] = false;
 
 	PersistData(client, true);
 
