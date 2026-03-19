@@ -276,7 +276,7 @@ public void OnPluginStart()
 
 	RegConsoleCmd("sm_stages", Command_Stages, "Opens the stage menu. Usage: sm_stages [stage #]");
 	RegConsoleCmd("sm_stage", Command_Stages, "Opens the stage menu. Usage: sm_stage [stage #]");
-	RegConsoleCmd("sm_s", Command_Stages, "Opens the stage menu. Usage: sm_s [stage #]");
+	//RegConsoleCmd("sm_s", Command_Stages, "Opens the stage menu. Usage: sm_s [stage #]");
 
 	RegConsoleCmd("sm_rs", Command_StageRestart, "Teleports the player to the current stage. Only works on surf maps.");
 	RegConsoleCmd("sm_stagerestart", Command_StageRestart, "Teleports the player to the current stage. Only works on surf maps.");
