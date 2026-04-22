@@ -381,7 +381,8 @@ public void OnClientCookiesCached(int client)
 		GetClientCookie(client, g_hVoteMapsCompletedStyle, sCookie, sizeof(sCookie));
 		g_iVoteMapsCompletedStyle[client] = strlen(sCookie) > 0 ? StringToInt(sCookie) : -1;
 
-		g_mVoteMapsCompleted[client].Clear();
+		if(g_mVoteMapsCompleted[client])
+			g_mVoteMapsCompleted[client].Clear();
 
 		int iSteamID = GetSteamAccountID(client);
 		if(iSteamID == 0)
