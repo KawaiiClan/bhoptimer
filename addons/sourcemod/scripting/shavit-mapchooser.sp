@@ -381,7 +381,8 @@ public void OnClientCookiesCached(int client)
 		GetClientCookie(client, g_hVoteMapsCompletedStyle, sCookie, sizeof(sCookie));
 		g_iVoteMapsCompletedStyle[client] = strlen(sCookie) > 0 ? StringToInt(sCookie) : -1;
 
-		g_mVoteMapsCompleted[client].Clear();
+		if(g_mVoteMapsCompleted[client])
+			g_mVoteMapsCompleted[client].Clear();
 
 		int iSteamID = GetSteamAccountID(client);
 		if(iSteamID == 0)
@@ -1097,7 +1098,6 @@ public void Handler_VoteFinishedGeneric(Menu menu, int num_votes, int num_client
 	}
 	else if(StrEqual(map, "reroll"))
 	{
-
 		Shavit_PrintToChatAll("%t", "ReRollingMaps", gS_ChatStrings.sVariable, RoundToFloor(float(item_info[0][VOTEINFO_ITEM_VOTES])/float(num_votes)*100), gS_ChatStrings.sText, gS_ChatStrings.sVariable, num_votes, gS_ChatStrings.sText, num_votes == 1 ? "" : "s");
 		LogAction(-1, -1, "Voting for next map has restarted with re-rolled maps.");
 
@@ -1966,6 +1966,12 @@ public int NominateMenuHandler(Menu menu, MenuAction action, int param1, int par
 	{
 		char mapname[PLATFORM_MAX_PATH];
 		menu.GetItem(param2, mapname, sizeof(mapname));
+
+		if(StrEqual(mapname, g_cMapName))
+		{
+			Shavit_PrintToChat(param1, "%t", "NominateCurrentMap", gS_ChatStrings.sVariable, gS_ChatStrings.sText, gS_ChatStrings.sWarning, gS_ChatStrings.sText);
+			return 0;
+		}
 
 		Nominate(param1, mapname);
 	}
