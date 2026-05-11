@@ -3706,9 +3706,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 	else if (!bOnGround && gA_Timers[client].bOnGround && gA_Timers[client].bJumped && !gA_Timers[client].bClientPaused)
 	{
+		int onehundredMillisecondsAsTicks = RoundToCeil(0.1 / GetTickInterval());
 		int iGroundTicks = gA_Timers[client].iGroundTicks;
 
-		if (iGroundTicks < 10)
+		if (iGroundTicks < onehundredMillisecondsAsTicks)
 		{
 			gA_Timers[client].iMeasuredJumps++;
 
