@@ -1348,8 +1348,8 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 		{
 			if(Shavit_GetStyleSettingBool(data.iStyle, "a_or_d_only"))
 			{
-				char sKey1[16] = "A-Only";
-				char sKey2[16] = "D-Only";
+				char sKey1[32] = "A-Only";
+				char sKey2[32] = "D-Only";
 
 				if(StrEqual(gS_StyleStrings[data.iStyle].sStyleName, "W-A/W-D-Only"))
 				{
