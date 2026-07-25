@@ -1241,6 +1241,13 @@ void UpdateClanTag(int client)
 			sStyleTagKey1 = "APro";
 			sStyleTagKey2 = "DPro";
 		}
+		if(StrEqual(gS_StyleStrings[gI_Style[client]].sStyleName, "Segmented (A/D-Only)"))
+		{
+			sStyleKey1 = "Segmented (A-Only)";
+			sStyleKey2 = "Segmented (D-Only)";
+			sStyleTagKey1 = "SegA";
+			sStyleTagKey2 = "SegD";
+		}
 		
 		if (Shavit_GetClientKeyCombo(client) == 0)
 		{
