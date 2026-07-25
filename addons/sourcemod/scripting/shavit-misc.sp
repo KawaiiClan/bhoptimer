@@ -1222,8 +1222,8 @@ void UpdateClanTag(int client)
 	
 	if(Shavit_GetStyleSettingBool(gI_Style[client], "a_or_d_only"))
 	{
-		char sStyleKey1[16] = "A-Only";
-		char sStyleKey2[16] = "D-Only";
+		char sStyleKey1[32] = "A-Only";
+		char sStyleKey2[32] = "D-Only";
 		char sStyleTagKey1[16] = "A";
 		char sStyleTagKey2[16] = "D";
 
