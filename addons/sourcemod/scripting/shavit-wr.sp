@@ -2743,6 +2743,11 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 			sStyleKey1 = "A-Only Pro";
 			sStyleKey2 = "D-Only Pro";
 		}
+		if(StrEqual(gS_StyleStrings[style].sStyleName, "Segmented (A/D-Only)"))
+		{
+			sStyleKey1 = "Segmented (A-Only)";
+			sStyleKey2 = "Segmented (D-Only)";
+		}
 		if (Shavit_GetClientKeyCombo(client) == 0)
 		{
 			sStyle = sStyleKey1;
