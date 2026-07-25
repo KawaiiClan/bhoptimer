@@ -2730,8 +2730,8 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 
 	if(Shavit_GetStyleSettingBool(style, "a_or_d_only"))
 	{
-		char sStyleKey1[16] = "A-Only";
-		char sStyleKey2[16] = "D-Only";
+		char sStyleKey1[32] = "A-Only";
+		char sStyleKey2[32] = "D-Only";
 
 		if(StrEqual(gS_StyleStrings[style].sStyleName, "W-A/W-D-Only"))
 		{
