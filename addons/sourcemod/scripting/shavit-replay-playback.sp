@@ -302,6 +302,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("Shavit_IsReplayDataLoaded", Native_IsReplayDataLoaded);
 	CreateNative("Shavit_IsReplayEntity", Native_IsReplayEntity);
 	CreateNative("Shavit_StartReplay", Native_StartReplay);
+	CreateNative("Shavit_StopReplay", Native_StopReplay);
 	CreateNative("Shavit_ReloadReplay", Native_ReloadReplay);
 	CreateNative("Shavit_ReloadReplays", Native_ReloadReplays);
 	CreateNative("Shavit_Replay_DeleteMap", Native_Replay_DeleteMap);
@@ -315,6 +316,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("Shavit_SetReplayCacheName", Native_SetReplayCacheName);
 	CreateNative("Shavit_GetReplayFolderPath", Native_GetReplayFolderPath);
 	CreateNative("Shavit_GetReplayPlaybackSpeed", Native_GetReplayPlaybackSpeed);
+	CreateNative("Shavit_GetClientReplayBot", Native_GetClientReplayBot);
 
 	if (!FileExists("cfg/sourcemod/plugin.shavit-replay-playback.cfg") && FileExists("cfg/sourcemod/plugin.shavit-replay.cfg"))
 	{
@@ -1031,6 +1033,27 @@ int CreateReplayEntity(int track, int style, float delay, int client, int bot, i
 		delay = gCV_ReplayDelay.FloatValue;
 	}
 
+	if (type == Replay_Automatic)
+	{
+		if (IsValidClient(gI_CentralBot) && gA_BotInfo[gI_CentralBot].iStatus == Replay_Idle)
+		{
+			type = Replay_Central;
+			bot = gI_CentralBot;
+		}
+		else if (ignorelimit || gI_DynamicBots < gCV_DynamicBotLimit.IntValue)
+		{
+			type = Replay_Dynamic;
+		}
+		else if (gCV_AllowPropBots.BoolValue)
+		{
+			type = Replay_Prop;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	if (bot == -1)
 	{
 		if (type == Replay_Prop)
@@ -1109,6 +1132,25 @@ int CreateReplayEntity(int track, int style, float delay, int client, int bot, i
 	}
 
 	return bot;
+}
+
+public int Native_StopReplay(Handle handler, int numParams)
+{
+	int bot = GetNativeCell(1);
+	int client = GetNativeCell(2);
+	int index = GetBotInfoIndex(bot);
+
+	if (index >= 1 && (!client || (IsValidClient(client) && CanControlReplay(client, gA_BotInfo[index]))))
+	{
+		// It should be fine allowing to stop a replay even if it is already in the Replay_Stop state
+		if (gA_BotInfo[index].iStatus != Replay_Idle)
+		{
+			FinishReplay(gA_BotInfo[index]);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 public int Native_StartReplay(Handle handler, int numParams)
@@ -1490,6 +1532,12 @@ public int Native_GetLoopingBotByName(Handle plugin, int numParams)
 public any Native_GetReplayPlaybackSpeed(Handle plugin, int numParams)
 {
 	return gA_BotInfo[GetBotInfoIndex(GetNativeCell(1))].fPlaybackSpeed;
+}
+
+public any Native_GetClientReplayBot(Handle plugin, int numParams)
+{
+	int ent = gA_BotInfo[GetNativeCell(1)].iEnt;
+	return (ent > 0) ? ent : 0; // Normalize this to 0
 }
 
 public int Native_SetReplayCacheName(Handle plugin, int numParams)
@@ -2949,7 +2997,7 @@ Action Command_PlayReplayFile(int client, int args)
 	}
 	delete hFile;
 
-	if(Shavit_StartReplayFromFile(aHeader.iStyle, aHeader.iTrack, -1.0, client, -1, Replay_Dynamic, true, sPath) == 0)
+	if(Shavit_StartReplayFromFile(aHeader.iStyle, aHeader.iTrack, -1.0, client, -1, Replay_Automatic, true, sPath) == 0)
 	{
 		Shavit_PrintToChat(client, "%T", "FailedToCreateReplay", client);
 	}
