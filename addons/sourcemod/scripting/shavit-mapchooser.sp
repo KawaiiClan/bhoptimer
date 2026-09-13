@@ -33,6 +33,7 @@
 
 #undef REQUIRE_PLUGIN
 #include <shavit/rankings>
+#include <kawaii-maprating>
 
 // for MapChange type
 #include <mapchooser>
@@ -128,6 +129,8 @@ Menu g_hEnhancedMenu;
 Menu g_aTierMenus[10+1];
 bool g_bWaitingForTiers = false;
 bool g_bTiersAssigned = false;
+bool g_bWaitingForRatings = false;
+bool g_bRatingsAssigned = false;
 
 Menu g_hVoteMenu;
 
@@ -156,6 +159,7 @@ bool gB_Late = false;
 EngineVersion gEV_Type = Engine_Unknown;
 
 bool gB_Rankings = false;
+bool gB_Ratings = false;
 
 enum
 {
@@ -285,6 +289,7 @@ public void OnPluginStart()
 	AddCommandListener(Command_MapButFaster, "sm_map");
 
 	gB_Rankings = LibraryExists("shavit-rankings");
+	gB_Ratings = LibraryExists("kawaii-maprating");
 
 	if(gB_Late)
 	{
@@ -295,6 +300,11 @@ public void OnPluginStart()
 		if(gB_Rankings)
 		{
 			g_bTiersAssigned = true;
+		}
+
+		if(gB_Ratings)
+		{
+			g_bRatingsAssigned = true;
 		}
 
 		for(int i = 1; i < MaxClients; i++)
@@ -329,6 +339,11 @@ public void OnLibraryAdded(const char[] name)
 	{
 		gB_Rankings = true;
 	}
+	
+	if(StrEqual(name, "kawaii-maprating"))
+	{
+		gB_Ratings = true;
+	}
 }
 
 public void OnLibraryRemoved(const char[] name)
@@ -336,6 +351,11 @@ public void OnLibraryRemoved(const char[] name)
 	if(StrEqual(name, "shavit-rankings"))
 	{
 		gB_Rankings = false;
+	}
+	
+	if(StrEqual(name, "kawaii-maprating"))
+	{
+		gB_Ratings = false;
 	}
 }
 
@@ -438,6 +458,9 @@ public void OnMapEnd()
 	g_iExtendCount = 0;
 	g_bWaitingForTiers = false;
 	g_bTiersAssigned = false;
+	
+	g_bWaitingForRatings = false;
+	g_bRatingsAssigned = false;
 
 	g_bMapVoteFinished = false;
 	g_bMapVoteStarted = false;
@@ -458,6 +481,17 @@ public void Shavit_OnTierAssigned(const char[] map, int tier)
 	if(g_bWaitingForTiers)
 	{
 		g_bWaitingForTiers = false;
+		RequestFrame(CreateNominateMenu);
+	}
+}
+
+public void MapRating_OnRatingsAssigned()
+{
+	g_bRatingsAssigned = true;
+
+	if(g_bWaitingForRatings)
+	{
+		g_bWaitingForRatings = false;
 		RequestFrame(CreateNominateMenu);
 	}
 }
@@ -799,16 +833,28 @@ void InitiateMapVote(MapChange when)
 	StringMap tiersMap = null;
 	if(gB_Rankings) tiersMap = Shavit_GetMapTiers();
 
+	StringMap ratingsMap = null;
+	if(gB_Ratings) ratingsMap = MapRating_GetMapRatings();
+
 	int nominateMapsToAdd = (mapsToAdd > g_aNominateList.Length) ? g_aNominateList.Length : mapsToAdd;
 	for(int i = 0; i < nominateMapsToAdd; i++)
 	{
 		g_aNominateList.GetString(i, map, sizeof(map));
 		LessStupidGetMapDisplayName(map, mapdisplay, sizeof(mapdisplay));
 
+		char mapname[PLATFORM_MAX_PATH + 32];
+		strcopy(mapname, PLATFORM_MAX_PATH + 32, mapdisplay);
+		if(ratingsMap)
+		{
+			int rating = 0;
+			ratingsMap.GetValue(mapname, rating);
+			Format(mapdisplay, sizeof(mapdisplay), "%s (%s%i)", mapdisplay, rating > 0 ? "+" : "", rating);
+		}
+
 		if(tiersMap && g_cvMapVoteShowTier.BoolValue)
 		{
 			int tier = 0;
-			tiersMap.GetValue(mapdisplay, tier);
+			tiersMap.GetValue(mapname, tier);
 			Format(mapdisplay, sizeof(mapdisplay), "[T%i] %s", tier, mapdisplay);
 		}
 		else
@@ -869,10 +915,20 @@ void InitiateMapVote(MapChange when)
 
 		LowercaseString(mapdisplay);
 
+		char mapname[PLATFORM_MAX_PATH + 32];
+		strcopy(mapname, PLATFORM_MAX_PATH + 32, mapdisplay);
+		if(ratingsMap)
+		{
+			int rating = 0;
+			ratingsMap.GetValue(mapname, rating);
+
+			Format(mapdisplay, sizeof(mapdisplay), "%s (%s%i)", mapdisplay, rating > 0 ? "+" : "", rating);
+		}
+
 		if(tiersMap && g_cvMapVoteShowTier.BoolValue)
 		{
 			int tier = 0;
-			tiersMap.GetValue(mapdisplay, tier);
+			tiersMap.GetValue(mapname, tier);
 
 			Format(mapdisplay, sizeof(mapdisplay), "[T%i] %s", tier, mapdisplay);
 		}
@@ -883,6 +939,7 @@ void InitiateMapVote(MapChange when)
 
 	delete used_indices;
 	delete tiersMap;
+	delete ratingsMap;
 
 	if((when == MapChange_MapEnd && add_extend) || (when == MapChange_Instant))
 	{
@@ -1224,15 +1281,28 @@ public int Handler_MapVoteMenu(Menu menu, MenuAction action, int param1, int par
 
 			StringMap tiersMap = null;
 			if(gB_Rankings) tiersMap = Shavit_GetMapTiers();
+			StringMap ratingsMap = null;
+
+			char sRating[8];
+			if(gB_Ratings)
+			{
+				int rating = 0;
+				ratingsMap = MapRating_GetMapRatings();
+				ratingsMap.GetValue(map, rating);
+				FormatEx(sRating, 8, " (%s%i)", rating > 0 ? "+" : "", rating);
+			}
+
 			if(tiersMap && g_cvMapVoteShowTier.BoolValue)
 			{
 				int tier = 0;
 				tiersMap.GetValue(map, tier);
-				FormatEx(buffer, sizeof(buffer), "[%s] [T%d] %s", completed ? "X" : "  ", tier, map);
+				FormatEx(buffer, sizeof(buffer), "[%s] [T%d] %s%s", completed ? "X" : "  ", tier, map, sRating);
 			}
 			else
-				FormatEx(buffer, sizeof(buffer), "[%s] %s", completed ? "X" : "  ", map);
+				FormatEx(buffer, sizeof(buffer), "[%s] %s%s", completed ? "X" : "  ", map, sRating);
 
+			delete tiersMap;
+			delete ratingsMap;
 			return RedrawMenuItem(buffer);
 		}
 
@@ -1475,6 +1545,8 @@ void SMC_NominateMatches(int client, const char[] mapname)
 	char oldMapName[PLATFORM_MAX_PATH];
 	StringMap tiersMap = null;
 	if(gB_Rankings) tiersMap = Shavit_GetMapTiers();
+	StringMap ratingsMap = null;
+	if(gB_Ratings) ratingsMap = MapRating_GetMapRatings();
 	int min = GetConVarInt(g_cvMinTier);
 	int max = GetConVarInt(g_cvMaxTier);
 
@@ -1504,10 +1576,19 @@ void SMC_NominateMatches(int client, const char[] mapname)
 			char mapdisplay[PLATFORM_MAX_PATH];
 			LessStupidGetMapDisplayName(entry, mapdisplay, sizeof(mapdisplay));
 
+			char mapName[PLATFORM_MAX_PATH + 32];
+			strcopy(mapName, PLATFORM_MAX_PATH + 32, mapdisplay);
+			if(ratingsMap)
+			{
+				int rating = 0;
+				tiersMap.GetValue(mapName, rating);
+				Format(mapdisplay, sizeof(mapdisplay), "%s (%s%i)", mapdisplay, rating > 0 ? "+" : "", rating);
+			}
+
 			if(tiersMap)
 			{
 				int tier = 0;
-				tiersMap.GetValue(mapdisplay, tier);
+				tiersMap.GetValue(mapName, tier);
 
 				if(!(min <= tier <= max))
 				{
@@ -1526,6 +1607,7 @@ void SMC_NominateMatches(int client, const char[] mapname)
 	}
 
 	delete tiersMap;
+	delete ratingsMap;
 
 	switch(subNominateMenu.ItemCount)
 	{
@@ -1750,6 +1832,12 @@ void CreateNominateMenu()
 		g_bWaitingForTiers = true;
 		return;
 	}
+	
+	if(gB_Ratings && !g_bRatingsAssigned)
+	{
+		g_bWaitingForRatings = true;
+		return;
+	}
 
 	int min = GetConVarInt(g_cvMinTier);
 	int max = GetConVarInt(g_cvMaxTier);
@@ -1772,6 +1860,9 @@ void CreateNominateMenu()
 
 	StringMap tiersMap = null;
 	if(gB_Rankings) tiersMap = Shavit_GetMapTiers();
+
+	StringMap ratingsMap = null;
+	if(gB_Ratings) ratingsMap = MapRating_GetMapRatings();
 
 	g_aMapList.SortCustom(SlowSortThatSkipsFolders);
 
@@ -1797,10 +1888,20 @@ void CreateNominateMenu()
 		LessStupidGetMapDisplayName(mapname, mapdisplay, sizeof(mapdisplay));
 		g_mMapList.SetValue(mapdisplay, true);
 
+		char mapName[PLATFORM_MAX_PATH + 32];
+		strcopy(mapName, PLATFORM_MAX_PATH + 32, mapdisplay);
+		if(ratingsMap)
+		{
+			int rating = 0;
+			ratingsMap.GetValue(mapName, rating);
+
+			Format(mapdisplay, sizeof(mapdisplay), "%s (%s%i)", mapdisplay, rating > 0 ? "+" : "", rating);
+		}
+
 		if(tiersMap)
 		{
 			int tier = 0;
-			tiersMap.GetValue(mapdisplay, tier);
+			tiersMap.GetValue(mapName, tier);
 
 			if(!(min <= tier <= max))
 			{
@@ -1814,6 +1915,7 @@ void CreateNominateMenu()
 	}
 
 	delete tiersMap;
+	delete ratingsMap;
 
 	if(g_cvEnhancedMenu.BoolValue)
 	{
@@ -1861,6 +1963,9 @@ void CreateTierMenus()
 	StringMap tiersMap = null;
 	if(gB_Rankings) tiersMap = Shavit_GetMapTiers();
 
+	StringMap ratingsMap = null;
+	if(gB_Ratings) ratingsMap = MapRating_GetMapRatings();
+
 	int length = g_aMapList.Length;
 	for(int i = 0; i < length; ++i)
 	{
@@ -1872,6 +1977,7 @@ void CreateTierMenus()
 		LessStupidGetMapDisplayName(mapname, mapdisplay, sizeof(mapdisplay));
 
 		int mapTier = 0;
+		int mapRating = 0;
 
 		if(tiersMap)
 		{
@@ -1889,6 +1995,12 @@ void CreateTierMenus()
 			style = ITEMDRAW_DISABLED;
 		}
 
+		if(ratingsMap)
+		{
+			ratingsMap.GetValue(mapdisplay, mapRating);
+			Format(mapdisplay, sizeof(mapdisplay), "%s [%i]", mapdisplay, mapRating);
+		}
+
 		Format(mapdisplay, sizeof(mapdisplay), "[T%i] %s", mapTier, mapdisplay);
 
 		if(min <= mapTier <= max)
@@ -1898,6 +2010,7 @@ void CreateTierMenus()
 	}
 
 	delete tiersMap;
+	delete ratingsMap;
 
 	CreateEnhancedMenu();
 }
