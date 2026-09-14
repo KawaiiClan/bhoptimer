@@ -300,11 +300,13 @@ public void OnPluginStart()
 		if(gB_Rankings)
 		{
 			g_bTiersAssigned = true;
+			Shavit_OnTierAssigned("", 0);
 		}
 
 		if(gB_Ratings)
 		{
 			g_bRatingsAssigned = true;
+			MapRating_OnRatingsAssigned();
 		}
 
 		for(int i = 1; i < MaxClients; i++)
